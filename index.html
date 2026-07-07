@@ -558,6 +558,7 @@ const LIVE = !!API_URL;
 /* データ置き場（読み込み後に中身が入る） */
 let CLASSES=[], TEACHERS=[], CHILDREN=[], TAG_SUGGEST=[], EPISODES=[];
 let EP_SEQ = 0;
+let episodesReady = false;
 
 function iso(offset){
   const d=new Date(); d.setDate(d.getDate()-offset);
@@ -605,9 +606,9 @@ function buildDemoData(){
 }
 
 /* ---- 通信（GAS） ---- */
-async function apiGet(){
-  const r=await fetch(API_URL+'?action=list');
-  if(!r.ok) throw new Error('list failed');
+async function apiGet(action){
+  const r=await fetch(API_URL+'?action='+(action||'list'));
+  if(!r.ok) throw new Error((action||'list')+' failed');
   return r.json();
 }
 async function apiPost(action,payload){
@@ -619,19 +620,30 @@ async function apiPost(action,payload){
   if(!r.ok) throw new Error(action+' failed');
   return r.json();
 }
-async function loadData(){
-  if(LIVE){
-    const d=await apiGet();
-    CLASSES=d.classes||[]; TEACHERS=d.teachers||[]; CHILDREN=d.children||[];
-    TAG_SUGGEST=d.tags||[]; EPISODES=d.episodes||[];
-  } else {
-    buildDemoData();
-  }
+function sortChildrenOrder(){
   // クラス内は 年少 → 年中 → 年長 の順にそろえる（デモ・本番どちらも）
   CHILDREN.sort((a,b)=>
     a.classId!==b.classId ? (a.classId<b.classId?-1:1)
-    : (GRADE_ORDER[a.grade]??9)-(GRADE_ORDER[b.grade]??9)
+    : ((GRADE_ORDER[a.grade]??9)-(GRADE_ORDER[b.grade]??9))
   );
+}
+// 名簿など（開いた瞬間に必要な軽いデータ）
+async function loadMeta(){
+  if(LIVE){
+    const d=await apiGet('meta');
+    CLASSES=d.classes||[]; TEACHERS=d.teachers||[]; CHILDREN=d.children||[]; TAG_SUGGEST=d.tags||[];
+  } else {
+    buildDemoData(); // 名簿も記録もまとめて用意
+  }
+  sortChildrenOrder();
+}
+// 記録（増えると重い・裏で読む）
+async function loadEpisodes(){
+  if(LIVE){
+    const d=await apiGet('episodes');
+    EPISODES=d.episodes||[];
+  }
+  // デモは buildDemoData で既にセット済み
 }
 
 /* ---- 追加・更新・削除 ---- */
@@ -1018,6 +1030,7 @@ exportModal.addEventListener('click',e=>{ if(e.target===exportModal) closeExport
 document.getElementById('export-print').addEventListener('click',doExportPrint);
 
 function doExportPrint(){
+  if(LIVE && !episodesReady){ showToast('記録を読み込み中です。少し待ってからお試しください'); return; }
   const dateStr=exportDate.value;
   const classId=exportClass.value;
   if(!dateStr){ showToast('日付を選んでください'); return; }
@@ -1087,6 +1100,7 @@ function populateChildSelect(){
 childSelect.addEventListener('change',renderChildView);
 function renderChildView(){
   const box=document.getElementById('child-result');
+  if(LIVE && !episodesReady){ box.innerHTML=`<div class="status">記録を読み込み中…</div>`; return; }
   const id=childSelect.value;
   if(!id){ box.innerHTML=`<div class="empty"><strong>子どもを選ぶと記録が並びます</strong>その子が紐づいたエピソードが、新しい順につながって見えます。</div>`; return; }
   const c=childById(id);
@@ -1117,6 +1131,7 @@ classSeg.addEventListener('click',e=>{
 });
 function renderClassView(classId){
   const box=document.getElementById('class-result');
+  if(LIVE && !episodesReady){ box.innerHTML=`<div class="status">記録を読み込み中…</div>`; return; }
   const ids=new Set(CHILDREN.filter(c=>c.classId===classId).map(c=>c.id));
   const eps=EPISODES.filter(ep=>
     (ep.classIds||[]).includes(classId) ||
@@ -1142,6 +1157,7 @@ gradeSeg.addEventListener('click',e=>{
 });
 function renderGradeView(grade){
   const box=document.getElementById('grade-result');
+  if(LIVE && !episodesReady){ box.innerHTML=`<div class="status">記録を読み込み中…</div>`; return; }
   const ids=new Set(CHILDREN.filter(c=>c.grade===grade).map(c=>c.id));
   const eps=EPISODES.filter(ep=>
     (ep.grades||[]).includes(grade) ||
@@ -1176,7 +1192,7 @@ function setFooter(){
 }
 function showLoading(){
   ['child-result','class-result','grade-result'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.innerHTML=`<div class="status">読み込み中…</div>`;
+    const el=document.getElementById(id); if(el) el.innerHTML=`<div class="status">記録を読み込み中…</div>`;
   });
 }
 function showLoadError(){
@@ -1185,13 +1201,18 @@ function showLoadError(){
   });
   saveBtn.disabled=true;
 }
+function showEpisodeError(){
+  ['child-result','class-result','grade-result'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML=`<div class="status err">記録の読み込みに失敗しました。再読み込みしてください。</div>`;
+  });
+}
 
 async function init(){
   setFooter();
   markEmpty(); updateSaveState(); updateEditUI();
-  if(LIVE) showLoading();
+  // ① 名簿など軽いデータを先に取得 → 書く画面はこの時点で使える
   try{
-    await loadData();
+    await loadMeta();
   }catch(err){
     showLoadError();
     return;
@@ -1201,7 +1222,17 @@ async function init(){
   populateClassSeg();
   populateGradeSeg();
   renderTags();
-  refreshViews();
+
+  // ② 記録は裏で読み込む（増えても書く操作を待たせない）
+  if(LIVE){
+    showLoading();
+    loadEpisodes()
+      .then(()=>{ episodesReady=true; refreshViews(); })
+      .catch(()=>{ showEpisodeError(); });
+  } else {
+    episodesReady=true;
+    refreshViews();
+  }
 }
 init();
 </script>
