@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>保育日録</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5F2E9;
+    --card:#FCFAF4;
+    --ink:#38473A;
+    --ink-soft:#7B8578;
+    --leaf:#6E9A5E;
+    --leaf-deep:#54793F;
+    --honey:#E3A048;
+    --line:#E7E1D1;
+    --line-soft:#F0EBDD;
+    /* 学年チップ：年少=赤 / 年中=黄 / 年長=青 */
+    --sho-bg:#F8D6D2; --sho-tx:#C0392B;
+    --chu-bg:#F6E5AC; --chu-tx:#997A0F;
+    --cho-bg:#CFE0F0; --cho-tx:#2C6AA0;
+    --shadow:0 2px 10px rgba(84,74,45,.06);
+    --shadow-lift:0 8px 24px rgba(84,74,45,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Zen Maru Gothic',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    font-weight:400;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:64px;
+  }
+  /* ---------- header ---------- */
+  header{
+    padding:22px 20px 16px;
+    max-width:760px;margin:0 auto;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .export-btn{
+    appearance:none;font-family:inherit;font-weight:700;font-size:.8rem;cursor:pointer;flex:none;
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--card);border:1.5px solid var(--line);color:var(--ink);
+    padding:8px 13px;border-radius:20px;
+  }
+  .export-btn:hover{border-color:var(--leaf);color:var(--leaf-deep);}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .mark{
+    width:44px;height:44px;flex:none;
+    background:var(--leaf);border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow);
+  }
+  .brand h1{
+    font-size:1.32rem;font-weight:900;margin:0;letter-spacing:.02em;
+  }
+  .brand .sub{
+    font-size:.72rem;color:var(--ink-soft);font-weight:500;
+    margin-top:1px;
+  }
+  /* ---------- tabs ---------- */
+  nav{
+    position:sticky;top:0;z-index:20;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+  }
+  .tabs{
+    display:flex;gap:2px;max-width:760px;margin:0 auto;
+    padding:0 12px;overflow-x:auto;
+  }
+  .tab{
+    appearance:none;border:none;background:none;
+    font-family:inherit;font-size:.86rem;font-weight:700;
+    color:var(--ink-soft);
+    padding:12px 14px 11px;cursor:pointer;
+    border-bottom:3px solid transparent;
+    white-space:nowrap;transition:color .15s;
+  }
+  .tab:hover{color:var(--ink);}
+  .tab[aria-selected="true"]{
+    color:var(--leaf-deep);
+    border-bottom-color:var(--leaf);
+  }
+  .tab:focus-visible{outline:2px solid var(--leaf);outline-offset:-2px;border-radius:6px;}
+  main{max-width:760px;margin:0 auto;padding:20px 16px 40px;}
+  section[hidden]{display:none;}
+  h2.view-h{
+    font-size:1.02rem;font-weight:900;margin:0 0 4px;
+  }
+  .view-lead{font-size:.82rem;color:var(--ink-soft);margin:0 0 18px;}
+
+  /* ---------- form ---------- */
+  .field{margin-bottom:18px;}
+  .field > label{
+    display:block;font-size:.8rem;font-weight:700;
+    margin-bottom:7px;color:var(--ink);
+  }
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row .field{flex:1;min-width:140px;margin-bottom:0;}
+  input[type="date"],select,textarea,.tag-input input{
+    font-family:inherit;font-size:.92rem;color:var(--ink);
+    width:100%;background:var(--card);
+    border:1.5px solid var(--line);border-radius:12px;
+    padding:11px 13px;
+  }
+  input[type="date"]:focus,select:focus,textarea:focus,.tag-input input:focus{
+    outline:none;border-color:var(--leaf);
+    box-shadow:0 0 0 3px rgba(110,154,94,.15);
+  }
+  textarea{resize:vertical;min-height:120px;line-height:1.7;}
+  select{appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237B8578' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:34px;}
+
+  /* child picker */
+  .picker{
+    background:var(--card);border:1.5px solid var(--line);
+    border-radius:14px;overflow:hidden;
+  }
+  .picker-search{
+    display:flex;align-items:center;gap:8px;
+    padding:9px 12px;border-bottom:1px solid var(--line-soft);
+  }
+  .picker-search input{
+    border:none;background:none;padding:4px 0;font-size:.9rem;
+    box-shadow:none!important;
+  }
+  .picker-search svg{flex:none;opacity:.5;}
+  .picker-list{max-height:230px;overflow-y:auto;padding:4px;}
+  .pk-group{
+    font-size:.7rem;font-weight:700;color:var(--ink-soft);
+    padding:9px 10px 4px;letter-spacing:.04em;
+  }
+  .pk-item{
+    display:flex;align-items:center;gap:9px;
+    padding:8px 10px;border-radius:9px;cursor:pointer;
+    font-size:.9rem;
+  }
+  .pk-item:hover{background:var(--line-soft);}
+  .pk-check{
+    width:18px;height:18px;border-radius:6px;flex:none;
+    border:1.8px solid var(--line);background:#fff;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pk-item[aria-checked="true"] .pk-check{
+    background:var(--leaf);border-color:var(--leaf);
+  }
+  .pk-item[aria-checked="true"] .pk-check svg{display:block;}
+  .pk-check svg{display:none;}
+  .pk-name{flex:1;}
+  .chip-grade{
+    font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:20px;flex:none;
+  }
+  .g-年少{background:var(--sho-bg);color:var(--sho-tx);}
+  .g-年中{background:var(--chu-bg);color:var(--chu-tx);}
+  .g-年長{background:var(--cho-bg);color:var(--cho-tx);}
+
+  .selected-wrap{margin-bottom:10px;min-height:2px;}
+  .sel-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:#fff;border:1.5px solid var(--leaf);
+    color:var(--leaf-deep);font-weight:700;font-size:.82rem;
+    padding:5px 8px 5px 11px;border-radius:20px;margin:0 6px 6px 0;
+  }
+  .sel-chip button{
+    appearance:none;border:none;background:var(--line-soft);
+    width:18px;height:18px;border-radius:50%;cursor:pointer;
+    color:var(--ink-soft);font-size:.8rem;line-height:1;
+    display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .sel-chip button:hover{background:var(--sho-bg);color:var(--sho-tx);}
+  .sel-empty{font-size:.8rem;color:var(--ink-soft);}
+
+  /* エピソード入力（本文中に子どもを挿入） */
+  .editor-hint{font-size:.76rem;color:var(--ink-soft);margin:0 0 8px;line-height:1.6;}
+  .editor-tool{margin-bottom:8px;position:relative;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .mention-btn{
+    appearance:none;font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--card);border:1.5px solid var(--leaf);color:var(--leaf-deep);
+    padding:8px 14px;border-radius:20px;
+  }
+  .mention-btn:hover{background:#EEF4E8;}
+  .editor{
+    font-family:inherit;font-size:.94rem;color:var(--ink);line-height:1.9;
+    min-height:130px;background:var(--card);
+    border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;
+  }
+  .editor:focus{outline:none;border-color:var(--leaf);box-shadow:0 0 0 3px rgba(110,154,94,.15);}
+  .editor.is-empty:before{content:attr(data-placeholder);color:var(--ink-soft);pointer-events:none;}
+  .mention{ } /* 見た目は .nm + .name-* で付与 */
+  .nm{font-weight:700;border-radius:7px;padding:1px 7px;margin:0 1px;white-space:nowrap;}
+  .name-年少{background:var(--sho-bg);color:var(--sho-tx);}
+  .name-年中{background:var(--chu-bg);color:var(--chu-tx);}
+  .name-年長{background:var(--cho-bg);color:var(--cho-tx);}
+  .name-class{background:#E4E9E0;color:#485842;}
+  .nm.grp{border:1px dashed rgba(60,70,55,.4);}
+  .kid-chip.grp{border:1px dashed rgba(60,70,55,.4);}
+  .pk-whole{font-size:.66rem;color:var(--ink-soft);font-weight:500;}
+  .pk-group.pk-sep{margin-top:4px;border-top:1px solid var(--line-soft);}
+  .picker.pop{
+    position:absolute;left:0;top:calc(100% + 6px);width:min(340px,100%);
+    z-index:30;box-shadow:var(--shadow-lift);
+  }
+  .picker.pop[hidden]{display:none;}
+  .pk-item .chip-grade{margin-left:auto;}
+
+  /* tags */
+  .tag-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+  .tag-opt{
+    appearance:none;font-family:inherit;cursor:pointer;
+    font-size:.8rem;font-weight:700;
+    border:1.5px solid var(--line);background:var(--card);
+    color:var(--ink-soft);padding:6px 12px;border-radius:20px;
+    transition:.12s;
+  }
+  .tag-opt:hover{border-color:var(--honey);color:var(--ink);}
+  .tag-opt[aria-pressed="true"]{
+    background:var(--honey);border-color:var(--honey);color:#4a3410;
+  }
+  .tag-input{display:flex;gap:8px;}
+  .tag-input button{
+    flex:none;font-family:inherit;font-weight:700;font-size:.85rem;
+    border:1.5px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:12px;padding:0 16px;cursor:pointer;
+  }
+  .tag-input button:hover{border-color:var(--leaf);}
+
+  .save-btn{
+    width:100%;font-family:inherit;font-weight:900;font-size:1rem;
+    color:#fff;background:var(--leaf);border:none;
+    padding:15px;border-radius:14px;cursor:pointer;margin-top:6px;
+    box-shadow:var(--shadow);transition:.15s;
+  }
+  .save-btn:hover{background:var(--leaf-deep);box-shadow:var(--shadow-lift);}
+  .save-btn:active{transform:translateY(1px);}
+  .save-btn:disabled{background:#C3C9BC;cursor:not-allowed;box-shadow:none;}
+
+  /* selectors for view tabs */
+  .seg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .seg button{
+    appearance:none;font-family:inherit;cursor:pointer;
+    font-size:.88rem;font-weight:700;
+    border:1.5px solid var(--line);background:var(--card);color:var(--ink);
+    padding:9px 16px;border-radius:12px;transition:.12s;
+  }
+  .seg button:hover{border-color:var(--leaf);}
+  .seg button[aria-pressed="true"]{
+    background:var(--leaf);border-color:var(--leaf);color:#fff;
+  }
+  .pickone{margin-bottom:18px;}
+
+  /* ---------- timeline (signature) ---------- */
+  .tl-head{
+    display:flex;align-items:baseline;gap:10px;margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .tl-title{font-size:1.15rem;font-weight:900;}
+  .tl-count{font-size:.78rem;color:var(--ink-soft);font-weight:500;}
+  .timeline{position:relative;padding-left:26px;}
+  .timeline::before{
+    content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;
+    background:linear-gradient(var(--leaf),var(--line));border-radius:2px;
+  }
+  .entry{position:relative;margin-bottom:16px;}
+  .entry::before{
+    content:"";position:absolute;left:-23px;top:6px;
+    width:12px;height:12px;border-radius:50%;
+    background:var(--leaf);border:3px solid var(--paper);
+    box-shadow:0 0 0 1px var(--line);
+  }
+  .entry-date{
+    font-size:.76rem;font-weight:700;color:var(--leaf-deep);
+    margin-bottom:6px;
+  }
+  .entry-card{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:14px 15px;box-shadow:var(--shadow);
+  }
+  .entry-teacher{font-size:.72rem;color:var(--ink-soft);font-weight:700;margin-bottom:5px;}
+  .entry-body{margin:0 0 11px;font-size:.94rem;white-space:pre-wrap;}
+  .entry-kids{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
+  .kid-chip{
+    display:inline-flex;align-items:baseline;gap:5px;
+    font-size:.74rem;font-weight:700;
+    padding:3px 10px;border-radius:20px;
+  }
+  .kid-chip .kc-cls{font-weight:500;font-size:.68rem;opacity:.72;}
+  .entry-tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .etag{font-size:.72rem;font-weight:700;color:var(--honey);}
+  .etag::before{content:"#";opacity:.6;}
+
+  .empty{
+    text-align:center;color:var(--ink-soft);font-size:.88rem;
+    padding:40px 20px;background:var(--card);
+    border:1.5px dashed var(--line);border-radius:16px;
+  }
+  .empty strong{color:var(--ink);display:block;margin-bottom:4px;font-size:.94rem;}
+
+  /* 記録の編集・削除 */
+  .entry-actions{display:flex;gap:6px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line-soft);}
+  .entry-act{
+    appearance:none;font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    padding:5px 12px;border-radius:16px;
+  }
+  .entry-act:hover{border-color:var(--leaf);color:var(--leaf-deep);}
+  .entry-act[data-act="del"]:hover{border-color:var(--sho-tx);color:var(--sho-tx);background:var(--sho-bg);}
+  .edit-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    background:#FBF1DC;border:1.5px solid var(--honey);border-radius:12px;
+    padding:10px 14px;margin-bottom:14px;font-size:.84rem;font-weight:700;color:#7a5410;
+  }
+  .edit-banner[hidden]{display:none;}
+  .edit-banner button{
+    appearance:none;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;
+    border:1.5px solid var(--honey);background:#fff;color:#7a5410;
+    padding:6px 14px;border-radius:16px;
+  }
+  .status{
+    text-align:center;color:var(--ink-soft);font-size:.86rem;padding:36px 20px;
+  }
+  .status.err{color:var(--sho-tx);background:var(--sho-bg);border-radius:14px;font-weight:700;}
+
+  /* 書き出しモーダル */
+  .modal{
+    position:fixed;inset:0;z-index:100;padding:20px;
+    background:rgba(56,52,40,.42);display:flex;align-items:center;justify-content:center;
+  }
+  .modal[hidden]{display:none;}
+  .modal-card{
+    background:var(--card);border-radius:18px;padding:22px 22px 20px;
+    width:min(380px,100%);box-shadow:var(--shadow-lift);
+  }
+  .modal-card h3{margin:0 0 4px;font-size:1.05rem;font-weight:900;}
+  .modal-card p.hint{margin:0 0 16px;font-size:.78rem;color:var(--ink-soft);}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .modal-actions button{
+    flex:1;font-family:inherit;font-weight:700;font-size:.92rem;cursor:pointer;
+    padding:12px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);
+  }
+  .modal-actions .primary{background:var(--leaf);border-color:var(--leaf);color:#fff;}
+  .modal-actions .primary:hover{background:var(--leaf-deep);}
+
+  /* footer */
+  footer{
+    max-width:760px;margin:0 auto;padding:18px 16px 0;
+    font-size:.72rem;color:var(--ink-soft);border-top:1px solid var(--line);
+  }
+
+  /* toast */
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;font-weight:700;font-size:.9rem;
+    padding:12px 22px;border-radius:30px;box-shadow:var(--shadow-lift);
+    opacity:0;pointer-events:none;transition:.3s;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media(prefers-reduced-motion:no-preference){
+    .entry{animation:rise .4s ease both;}
+    @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  }
+  @media(max-width:480px){
+    .brand h1{font-size:1.18rem;}
+    main{padding:16px 14px 40px;}
+  }
+
+  /* ===== 印刷（B4縦）用の書き出しシート ===== */
+  #print-area{display:none;}
+  .pr-sheet{font-family:'Zen Maru Gothic',sans-serif;color:#1e1e1e;}
+  .pr-head{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+    border-bottom:2.5px solid #333;padding-bottom:9px;margin-bottom:14px;
+  }
+  .pr-brand{font-weight:900;font-size:13pt;letter-spacing:.02em;}
+  .pr-date{font-weight:900;font-size:21pt;margin-top:3px;}
+  .pr-scope{font-size:11pt;color:#444;margin-top:3px;}
+  .pr-approve{border-collapse:collapse;flex:none;}
+  .pr-approve td{border:1px solid #333;width:22mm;height:13mm;text-align:center;vertical-align:top;font-size:8pt;padding-top:2px;}
+  .pr-approve tr:first-child td{height:auto;background:#eee;font-weight:700;padding:3px 0;}
+  .pr-entry{padding:10px 2px;border-bottom:1px solid #bbb;break-inside:avoid;page-break-inside:avoid;}
+  .pr-teacher{font-size:9pt;font-weight:700;color:#555;margin-bottom:4px;}
+  .pr-body{font-size:11.5pt;line-height:1.75;}
+  .pr-kids{margin-top:6px;font-size:8.5pt;color:#333;}
+  .pr-kids .pr-k{display:inline-block;margin-right:10px;white-space:nowrap;}
+  .pr-tags{margin-top:4px;font-size:8.5pt;color:#777;}
+  .pr-empty{font-size:12pt;color:#666;padding:40px 0;text-align:center;}
+  .pr-foot{margin-top:14px;font-size:8pt;color:#999;text-align:right;}
+  /* 名前は色付きのまま印刷（カラープリンタ時）。白黒でも太字で判読可 */
+  .nm,.kid-chip{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+  @media print{
+    body{background:#fff;padding:0;}
+    body > *:not(#print-area){display:none !important;}
+    #print-area{display:block !important;}
+    @page{ size:257mm 364mm; margin:14mm; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="mark" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 21V11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M12 12C12 9 9.5 6.5 6 6.5C6 10 8.5 12.5 12 12.5" fill="#fff" opacity=".95"/>
+        <path d="M12 11C12 8 14.5 5.5 18 5.5C18 9 15.5 11.5 12 11.5" fill="#fff"/>
+      </svg>
+    </div>
+    <div>
+      <h1>保育日録</h1>
+    </div>
+  <button class="export-btn" id="export-btn">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M4 6V2h8v4M4 12H3a1 1 0 01-1-1V7a1 1 0 011-1h10a1 1 0 011 1v4a1 1 0 01-1 1h-1M4 10h8v4H4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    書き出し
+  </button>
+</header>
+
+<nav>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true"  data-view="write">書く</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="child">子どもで見る</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="class">クラスで見る</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="grade">学年で見る</button>
+  </div>
+</nav>
+
+<main>
+  <!-- ============ WRITE ============ -->
+  <section id="view-write" role="tabpanel">
+    <h2 class="view-h">今日のエピソードを残す</h2>
+
+    <div class="row" style="margin-bottom:18px;">
+      <div class="field">
+        <label for="in-date">日付</label>
+        <input type="date" id="in-date">
+      </div>
+      <div class="field">
+        <label for="in-teacher">書いた先生</label>
+        <select id="in-teacher"></select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="editor">エピソード</label>
+      <p class="editor-hint">書きながら、子どもが登場するところで［＋ 子ども］を押すと名前が本文に入り、その子にひもづきます。クラスや学年"全体"の話は［＋ クラス・学年］から。</p>
+      <div class="editor-tool">
+        <button type="button" class="mention-btn" id="mention-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          子ども
+        </button>
+        <button type="button" class="mention-btn" id="group-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          クラス・学年
+        </button>
+        <div class="picker pop" id="picker" hidden>
+          <div class="picker-search">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <input type="text" id="child-search" placeholder="名前で探す">
+          </div>
+          <div class="picker-list" id="picker-list"></div>
+        </div>
+        <div class="picker pop" id="group-picker" hidden>
+          <div class="picker-list" id="group-list"></div>
+        </div>
+      </div>
+      <div class="editor" id="editor" contenteditable="true" data-placeholder="今日その子に見えた姿を、そのまま書いてみてください。"></div>
+    </div>
+
+    <div class="field">
+      <label>タグ<span style="color:var(--ink-soft);font-weight:400;font-size:.76rem;">（あとで振り返りやすくなります）</span></label>
+      <div class="tag-row" id="tag-row"></div>
+      <div class="tag-input">
+        <input type="text" id="tag-new" placeholder="タグを追加">
+        <button type="button" id="tag-add">追加</button>
+      </div>
+    </div>
+
+    <div class="edit-banner" id="edit-banner" hidden></div>
+    <button class="save-btn" id="save-btn" disabled>記録を保存</button>
+  </section>
+
+  <!-- ============ CHILD ============ -->
+  <section id="view-child" role="tabpanel" hidden>
+    <h2 class="view-h">子どもで見る</h2>
+    <p class="view-lead">その子の1年間の育ちが、時系列でつながって見えます。</p>
+    <div class="pickone field">
+      <label for="child-select">子どもを選ぶ</label>
+      <select id="child-select"></select>
+    </div>
+    <div id="child-result"></div>
+  </section>
+
+  <!-- ============ CLASS ============ -->
+  <section id="view-class" role="tabpanel" hidden>
+    <h2 class="view-h">クラスで見る</h2>
+    <p class="view-lead">そのクラスの子が登場したエピソードをまとめて見ます。</p>
+    <div class="seg" id="class-seg"></div>
+    <div id="class-result"></div>
+  </section>
+
+  <!-- ============ GRADE ============ -->
+  <section id="view-grade" role="tabpanel" hidden>
+    <h2 class="view-h">学年で見る</h2>
+    <p class="view-lead">縦割りでも、学年をまたいで同じ年齢の育ちを横並びで見返せます。</p>
+    <div class="seg" id="grade-seg"></div>
+    <div id="grade-result"></div>
+  </section>
+
+  <footer id="foot-note">
+    これは試作品（プロトタイプ）です。名簿・記録はサンプルで、画面を再読み込みすると初期状態に戻ります。実運用では園のアカウントに保存され、消えません。
+  </footer>
+</main>
+
+<div class="modal" id="export-modal" hidden>
+  <div class="modal-card">
+    <h3>1日分を書き出す</h3>
+    <p class="hint">選んだ日の記録を、B4サイズの日誌として印刷します。</p>
+    <div class="field">
+      <label for="export-date">日付</label>
+      <input type="date" id="export-date">
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="export-class">クラス</label>
+      <select id="export-class"></select>
+    </div>
+    <div class="modal-actions">
+      <button type="button" id="export-cancel">とじる</button>
+      <button type="button" id="export-print" class="primary">印刷する</button>
+    </div>
+  </div>
+</div>
+
+<div id="print-area"></div>
+
+<div class="toast" id="toast">保存しました</div>
+
+<script>
+/* =========================================================
+   データ（将来スプレッドシートの各シートに対応）
+   ========================================================= */
+const GRADES = ['年少','年中','年長'];
+const GRADE_ORDER = {'年少':0,'年中':1,'年長':2};
+
+/* ===== 接続設定 =====================================================
+   園アカウントで発行したGASウェブアプリのURLを API_URL に貼ると、
+   本番モード（園のスプレッドシートに保存・編集・削除）になります。
+   空のままだとデモモード（ダミー・再読み込みで戻る）で動きます。 */
+const API_URL = 'https://script.google.com/macros/s/AKfycbympKLyDyOex-l-OWDfBZ9b4DAqlJegWKu9_yA32w9VWMZJEM93qjFA2MbeVkrgdIf0/exec';
+const LIVE = !!API_URL;
+
+/* データ置き場（読み込み後に中身が入る） */
+let CLASSES=[], TEACHERS=[], CHILDREN=[], TAG_SUGGEST=[], EPISODES=[];
+let EP_SEQ = 0;
+
+function iso(offset){
+  const d=new Date(); d.setDate(d.getDate()-offset);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+/* ---- デモ用ダミーデータ ---- */
+function buildDemoData(){
+  CLASSES=[{id:'A',name:'たいよう組'},{id:'B',name:'にじ組'},{id:'C',name:'つき組'}];
+  TEACHERS=[
+    {id:'tA1',name:'のむら先生',classId:'A'},{id:'tA2',name:'さとみ先生',classId:'A'},
+    {id:'tB1',name:'あおき先生',classId:'B'},{id:'tB2',name:'たなか先生',classId:'B'},
+    {id:'tC1',name:'まつだ先生',classId:'C'},{id:'tC2',name:'いのうえ先生',classId:'C'},
+  ];
+  const NAMES=['はると','ゆうと','そうた','みなと','りく','ひなた','いつき','ゆうき','はるき','そうすけ','かなで','りひと','あさひ','ひろと','たいが','けんと','ゆうま','そら','かいと','れん','あおい','さくら','ひまり','つむぎ','めい','ゆい','ひな','りん','みお','あかり','いろは','ことね','みゆ','こはる','さな','ひより','あん','ののか','まなか','すず','ちひろ','ゆあ','えま','のあ','ひなの','みつき','るい','あおと','ゆづき','こう','はな','りお','せな','あゆむ','かんな','しおん','みなみ'];
+  CHILDREN=[]; let ni=0;
+  CLASSES.forEach(cl=>{ for(let n=1;n<=19;n++){ CHILDREN.push({id:cl.id+String(n).padStart(2,'0'),name:NAMES[ni++],classId:cl.id,grade:GRADES[(n-1)%3]}); } });
+  CHILDREN.sort((a,b)=> a.classId!==b.classId ? (a.classId<b.classId?-1:1) : GRADE_ORDER[a.grade]-GRADE_ORDER[b.grade]);
+  TAG_SUGGEST=['初めてできた','友だち関係','ことば','運動・からだ','生活・自立','感情','表現・つくる','縦割りのかかわり','発見・探究','家庭とのこと'];
+  const SEED=[
+    [0,'tA1',['A03','A07'],'砂場で山を作っていた@[A07]のところに、年長の@[A03]がやってきて「ここ掘っていいよ」とスコップを渡してあげる姿。異年齢ならではの優しさが自然に出ていた。',['縦割りのかかわり','友だち関係']],
+    [1,'tB1',['B02'],'@[B02]が鉄棒の前回りに挑戦。はじめは怖がっていたけれど、何度か補助するうちに自分の力でくるんと回れた。回った瞬間の得意そうな顔がよかった。',['初めてできた','運動・からだ']],
+    [1,'tA2',['A11','A05'],'@[A11]と@[A05]が廃材で「ロボットを作る」と相談しながら製作。「ここに目つけよう」「うではこっち」と役割を分けて進める会話が育っていた。',['ことば','表現・つくる']],
+    [2,'tC1',['C04'],'朝の受け入れで@[C04]が少し泣いていたが、好きな絵本のコーナーに誘うと落ち着いた。自分で気持ちを切り替えて遊びに入っていけた。',['感情','生活・自立']],
+    [2,'tA1',['A03'],'@[A03]がダンゴムシを見つけて「まるくなった！」と大興奮。図鑑を持ってきて「これかな」と自分で調べようとする姿があった。',['発見・探究']],
+    [3,'tB2',['B09','B14','B03'],'ままごとコーナーで@[B09]と@[B14]が「お店やさん」を始め、そこへ@[B03]が加わって「いらっしゃいませ」の役をもらって嬉しそうだった。',['友だち関係','縦割りのかかわり']],
+    [3,'tC2',['C08'],'ホールでマット運動。@[C08]は前転がだいぶ上手になり、手のつき方を自分で意識できるようになってきた。',['運動・からだ']],
+    [4,'tA2',['A07'],'給食の準備で、@[A07]がこぼさずに自分で牛乳を注げた。「できたよ」と嬉しそうに見せてくれた。',['生活・自立','初めてできた']],
+    [5,'tB1',['B06','B02'],'@[B06]と@[B02]が玩具をめぐって喧嘩になりかけたが、「かして」「あとでね」と言葉でやりとりできた。手が出る前に言葉で伝えようとする姿が増えてきた。',['ことば','友だち関係']],
+    [5,'tC1',['C04','C12'],'@[C04]と@[C12]が絵の具で大きな紙にダイナミックに描く。色が混ざる様子を「みどりになった！」と発見して楽しんでいた。',['表現・つくる']],
+    [6,'tA1',['A15'],'@[A15]が友だちに玩具を貸してあげられず涙。でも少し時間を置いて、自分から「はい」と渡しにいけた。気持ちの折り合いが少しずつついてきている。',['感情']],
+    [7,'tB2',['B09'],'@[B09]が縄跳びを2回続けて跳べた。跳べるたびに「見て見て」と満面の笑み。',['運動・からだ','初めてできた']],
+    [8,'tC2',['C08','C15'],'片付けの時間、@[C15]が@[C08]に「これはこっちだよ」と場所を教えてあげていた。教える側の頼もしさが出てきた。',['縦割りのかかわり','生活・自立']],
+    [9,'tA2',['A11'],'@[A11]が水たまりに空が映っているのを見つけて「そらがおちてる」と表現。感じたことを自分の言葉にする力。',['発見・探究','ことば']],
+    [10,'tB1',['B14'],'@[B14]が最近眠そうな様子。お家で下の子が生まれたばかりとのこと。甘えたい気持ちを受け止めながら見守りたい。',['感情','家庭とのこと']],
+    [12,'tC1',['C04','C08','C12'],'劇ごっこで@[C04]と@[C08]と@[C12]が役を決める話し合い。「わたしオオカミやりたい」と主張し合い、じゃんけんで折り合いをつけていた。',['表現・つくる','友だち関係']],
+  ];
+  EP_SEQ=0;
+  EPISODES=SEED.map(s=>({id:'e'+(++EP_SEQ),date:iso(s[0]),teacherId:s[1],childIds:s[2],classIds:[],grades:[],body:s[3],tags:s[4]}));
+  // クラス全体・学年全体のエピソード例
+  EPISODES.push({id:'e'+(++EP_SEQ),date:iso(1),teacherId:'tA1',childIds:[],classIds:['A'],grades:[],
+    body:'@[class:A]、朝の集まりで少しずつ話を最後まで聞けるようになってきた。当番の声かけもスムーズ。',tags:['生活・自立']});
+  EPISODES.push({id:'e'+(++EP_SEQ),date:iso(2),teacherId:'tC2',childIds:[],classIds:[],grades:['年長'],
+    body:'運動会の練習、@[grade:年長]は全体的に集中が続かなかった。明日は流れを短く区切ってみる。',tags:['運動・からだ']});
+}
+
+/* ---- 通信（GAS） ---- */
+async function apiGet(){
+  const r=await fetch(API_URL+'?action=list');
+  if(!r.ok) throw new Error('list failed');
+  return r.json();
+}
+async function apiPost(action,payload){
+  const r=await fetch(API_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(Object.assign({action},payload))
+  });
+  if(!r.ok) throw new Error(action+' failed');
+  return r.json();
+}
+async function loadData(){
+  if(LIVE){
+    const d=await apiGet();
+    CLASSES=d.classes||[]; TEACHERS=d.teachers||[]; CHILDREN=d.children||[];
+    TAG_SUGGEST=d.tags||[]; EPISODES=d.episodes||[];
+  } else {
+    buildDemoData();
+  }
+}
+
+/* ---- 追加・更新・削除 ---- */
+async function persistEpisode(ep){
+  if(LIVE){
+    const action = ep.id ? 'update' : 'create';
+    const saved = await apiPost(action,{episode:ep});
+    if(action==='create'){ EPISODES.push(saved); }
+    else { const i=EPISODES.findIndex(x=>x.id===ep.id); if(i>=0) EPISODES[i]=saved; }
+    return saved;
+  }
+  if(ep.id){ const i=EPISODES.findIndex(x=>x.id===ep.id); if(i>=0) EPISODES[i]=Object.assign({},ep); return EPISODES[i]; }
+  ep.id='e'+(++EP_SEQ); EPISODES.push(Object.assign({},ep)); return ep;
+}
+async function removeEpisode(id){
+  if(LIVE){ await apiPost('delete',{id}); }
+  EPISODES=EPISODES.filter(x=>x.id!==id);
+}
+
+/* =========================================================
+   参照ヘルパー
+   ========================================================= */
+const childById = id => CHILDREN.find(c=>c.id===id);
+const classById = id => CLASSES.find(c=>c.id===id) || {id, name:''};
+const teacherName = id => (TEACHERS.find(t=>t.id===id)||{}).name || '';
+const WD = ['日','月','火','水','木','金','土'];
+function fmtDate(isoStr){
+  const [y,m,d]=isoStr.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  return `${m}/${d}（${WD[dt.getDay()]}）`;
+}
+function sortDesc(list){ return [...list].sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:0); }
+
+/* =========================================================
+   タイムライン描画（共通）
+   ========================================================= */
+function timelineHTML(episodes){
+  if(!episodes.length){
+    return `<div class="empty"><strong>まだ記録がありません</strong>「書く」から最初のエピソードを残してみましょう。</div>`;
+  }
+  const rows = sortDesc(episodes).map(ep=>{
+    const classChips = (ep.classIds||[]).map(id=>{
+      const cl=classById(id);
+      return `<span class="kid-chip name-class grp">${cl.name}<span class="kc-cls">全体</span></span>`;
+    }).join('');
+    const gradeChips = (ep.grades||[]).map(g=>
+      `<span class="kid-chip name-${g} grp">${g}<span class="kc-cls">全体</span></span>`
+    ).join('');
+    const kidChips = ep.childIds.map(id=>{
+      const c=childById(id); if(!c) return '';
+      return `<span class="kid-chip name-${c.grade}">${c.name}<span class="kc-cls">${classById(c.classId).name.replace('組','')}</span></span>`;
+    }).join('');
+    const kids = classChips + gradeChips + kidChips;
+    const tags = ep.tags.map(t=>`<span class="etag">${t}</span>`).join('');
+    return `<div class="entry">
+      <div class="entry-date">${fmtDate(ep.date)}</div>
+      <div class="entry-card">
+        <div class="entry-teacher">${teacherName(ep.teacherId)}</div>
+        <p class="entry-body">${renderBody(ep.body)}</p>
+        ${kids?`<div class="entry-kids">${kids}</div>`:''}
+        ${tags?`<div class="entry-tags">${tags}</div>`:''}
+        <div class="entry-actions">
+          <button class="entry-act" data-act="edit" data-ep-id="${ep.id}">編集</button>
+          <button class="entry-act" data-act="del" data-ep-id="${ep.id}">削除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="timeline">${rows}</div>`;
+}
+function escapeHTML(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+const TOKEN_RE = /@\[([^\]]+)\]/g;
+// トークンを {label, cls, grp} に解決（子ども/クラス/学年）
+function resolveToken(tok){
+  if(tok.indexOf('class:')===0){
+    const cl=classById(tok.slice(6));
+    return { label: cl.name, cls:'name-class', grp:true };
+  }
+  if(tok.indexOf('grade:')===0){
+    const g=tok.slice(6);
+    return { label: g, cls:'name-'+g, grp:true };
+  }
+  const c=childById(tok);
+  if(!c) return null;
+  return { label: c.name, cls:'name-'+c.grade, grp:false };
+}
+// 本文中の @[...] を色付きチップに変換（表示用）
+function renderBody(text){
+  return escapeHTML(text)
+    .replace(TOKEN_RE,(m,tok)=>{
+      const r=resolveToken(tok); if(!r) return m;
+      return `<span class="nm ${r.cls}${r.grp?' grp':''}">${r.label}</span>`;
+    })
+    .replace(/\n/g,'<br>');
+}
+// 本文 → 編集用エディタHTML（チップとして復元）
+function bodyToEditorHTML(text){
+  return escapeHTML(text)
+    .replace(TOKEN_RE,(m,tok)=>{
+      const r=resolveToken(tok); if(!r) return m;
+      return `<span class="mention nm ${r.cls}${r.grp?' grp':''}" contenteditable="false" data-token="${tok}">${r.label}</span>`;
+    })
+    .replace(/\n/g,'<br>');
+}
+
+/* =========================================================
+   タブ切り替え
+   ========================================================= */
+const tabs = [...document.querySelectorAll('.tab')];
+function activateTab(view){
+  tabs.forEach(t=>t.setAttribute('aria-selected', t.dataset.view===view));
+  ['write','child','class','grade'].forEach(v=>{
+    document.getElementById('view-'+v).hidden = (v!==view);
+  });
+  window.scrollTo({top:0,behavior:'instant'});
+}
+tabs.forEach(tab=> tab.addEventListener('click',()=>activateTab(tab.dataset.view)) );
+
+/* =========================================================
+   書く：状態
+   ========================================================= */
+const selectedTags = new Set();
+let editingId = null;
+
+// 日付・先生
+document.getElementById('in-date').value = iso(0);
+const teacherSel = document.getElementById('in-teacher');
+function populateTeachers(){
+  teacherSel.innerHTML = TEACHERS.map(t=>{
+    const cl=classById(t.classId);
+    return `<option value="${t.id}">${t.name}${cl?'（'+cl.name+'）':''}</option>`;
+  }).join('');
+}
+
+// 本文エディタ + 挿入
+const editor = document.getElementById('editor');
+const picker = document.getElementById('picker');
+const pickerList = document.getElementById('picker-list');
+const mentionBtn = document.getElementById('mention-btn');
+const childSearch = document.getElementById('child-search');
+const groupBtn = document.getElementById('group-btn');
+const groupPicker = document.getElementById('group-picker');
+const groupList = document.getElementById('group-list');
+let savedRange = null;
+
+function markEmpty(){
+  const empty = editor.textContent.trim()==='' && !editor.querySelector('.mention');
+  editor.classList.toggle('is-empty', empty);
+}
+function saveRange(){
+  const sel=window.getSelection();
+  if(sel.rangeCount && editor.contains(sel.anchorNode)) savedRange=sel.getRangeAt(0).cloneRange();
+}
+editor.addEventListener('keyup',saveRange);
+editor.addEventListener('mouseup',saveRange);
+editor.addEventListener('blur',saveRange);
+editor.addEventListener('input',()=>{ markEmpty(); updateSaveState(); });
+
+// --- 子ども（個人）ピッカー ---
+function renderPicker(filter=''){
+  const f=filter.trim(); let html='';
+  CLASSES.forEach(cl=>{
+    const kids=CHILDREN.filter(c=>c.classId===cl.id && (!f || c.name.includes(f)));
+    if(!kids.length) return;
+    html+=`<div class="pk-group">${cl.name}</div>`;
+    kids.forEach(c=>{
+      html+=`<div class="pk-item" data-token="${c.id}" data-label="${c.name}" data-cls="name-${c.grade}">
+        <span class="pk-name">${c.name}</span>
+        <span class="chip-grade g-${c.grade}">${c.grade}</span>
+      </div>`;
+    });
+  });
+  if(!html) html=`<div class="pk-group" style="padding:16px 10px;">「${escapeHTML(f)}」に一致する子どもはいません</div>`;
+  pickerList.innerHTML=html;
+}
+
+// --- クラス・学年（全体）ピッカー ---
+function renderGroupPicker(){
+  let html='<div class="pk-group">クラス全体</div>';
+  CLASSES.forEach(cl=>{
+    html+=`<div class="pk-item" data-token="class:${cl.id}" data-label="${cl.name}" data-cls="name-class" data-grp="1">
+      <span class="pk-name">${cl.name} <span class="pk-whole">全体</span></span>
+    </div>`;
+  });
+  html+='<div class="pk-group pk-sep">学年全体</div>';
+  GRADES.forEach(g=>{
+    html+=`<div class="pk-item" data-token="grade:${g}" data-label="${g}" data-cls="name-${g}" data-grp="1">
+      <span class="pk-name">${g} <span class="pk-whole">全体</span></span>
+      <span class="chip-grade g-${g}">${g}</span>
+    </div>`;
+  });
+  groupList.innerHTML=html;
+}
+
+function onPick(e){
+  const item=e.target.closest('.pk-item'); if(!item || !item.dataset.token) return;
+  insertChip(item.dataset.token, item.dataset.label, item.dataset.cls, item.dataset.grp==='1');
+  closePickers();
+}
+pickerList.addEventListener('click',onPick);
+groupList.addEventListener('click',onPick);
+childSearch.addEventListener('input',e=>renderPicker(e.target.value));
+
+function closePickers(){ picker.hidden=true; groupPicker.hidden=true; }
+function openChildPicker(){ saveRange(); groupPicker.hidden=true; picker.hidden=false; childSearch.value=''; renderPicker(''); childSearch.focus(); }
+function openGroupPicker(){ saveRange(); picker.hidden=true; renderGroupPicker(); groupPicker.hidden=false; }
+
+mentionBtn.addEventListener('click',e=>{ e.stopPropagation(); picker.hidden ? openChildPicker() : closePickers(); });
+groupBtn.addEventListener('click',e=>{ e.stopPropagation(); groupPicker.hidden ? openGroupPicker() : closePickers(); });
+document.addEventListener('click',e=>{
+  const inside = picker.contains(e.target) || groupPicker.contains(e.target) || e.target===mentionBtn || e.target===groupBtn;
+  if(!inside) closePickers();
+});
+
+function insertChip(token,label,cls,grp){
+  const chip=document.createElement('span');
+  chip.className='mention nm '+cls+(grp?' grp':''); chip.contentEditable='false';
+  chip.dataset.token=token; chip.textContent=label;
+  const space=document.createTextNode('\u00A0');
+  editor.focus();
+  let range=savedRange;
+  if(!range || !editor.contains(range.commonAncestorContainer)){
+    range=document.createRange(); range.selectNodeContents(editor); range.collapse(false);
+  }
+  range.deleteContents();
+  const frag=document.createDocumentFragment(); frag.appendChild(chip); frag.appendChild(space);
+  range.insertNode(frag);
+  const nr=document.createRange(); nr.setStartAfter(space); nr.collapse(true);
+  const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(nr);
+  savedRange=nr.cloneRange();
+  markEmpty(); updateSaveState();
+}
+
+// エディタDOM → 本文テキスト + 対象（子ども/クラス/学年）
+function serialize(){
+  const out={text:'',childIds:[],classIds:[],grades:[]};
+  (function walk(node){
+    node.childNodes.forEach(n=>{
+      if(n.nodeType===3){ out.text+=n.nodeValue; }
+      else if(n.nodeType===1){
+        if(n.classList && n.classList.contains('mention')){
+          const tok=n.dataset.token;
+          out.text+='@['+tok+']';
+          if(tok.indexOf('class:')===0){ const id=tok.slice(6); if(!out.classIds.includes(id)) out.classIds.push(id); }
+          else if(tok.indexOf('grade:')===0){ const g=tok.slice(6); if(!out.grades.includes(g)) out.grades.push(g); }
+          else { if(!out.childIds.includes(tok)) out.childIds.push(tok); }
+        } else if(n.nodeName==='BR'){ out.text+='\n'; }
+        else {
+          if(/^(DIV|P)$/.test(n.nodeName) && out.text && !out.text.endsWith('\n')) out.text+='\n';
+          walk(n);
+        }
+      }
+    });
+  })(editor);
+  out.text = out.text.replace(/\u00A0/g,' ').trim();
+  out.count = out.childIds.length + out.classIds.length + out.grades.length;
+  return out;
+}
+
+// タグ
+const tagRow = document.getElementById('tag-row');
+function renderTags(){
+  const all = new Set([...TAG_SUGGEST, ...selectedTags]);
+  tagRow.innerHTML = [...all].map(t=>
+    `<button type="button" class="tag-opt" aria-pressed="${selectedTags.has(t)}" data-tag="${escapeHTML(t)}">${escapeHTML(t)}</button>`
+  ).join('');
+}
+tagRow.addEventListener('click',e=>{
+  const b=e.target.closest('.tag-opt'); if(!b) return;
+  const t=b.dataset.tag;
+  selectedTags.has(t)?selectedTags.delete(t):selectedTags.add(t);
+  renderTags();
+});
+document.getElementById('tag-add').addEventListener('click',addTag);
+document.getElementById('tag-new').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTag();}});
+function addTag(){
+  const inp=document.getElementById('tag-new');
+  const v=inp.value.trim(); if(!v) return;
+  selectedTags.add(v); inp.value=''; renderTags();
+}
+
+// 保存 / 更新
+const saveBtn=document.getElementById('save-btn');
+const editBanner=document.getElementById('edit-banner');
+function updateSaveState(){
+  saveBtn.disabled = serialize().count===0;
+}
+function updateEditUI(){
+  if(editingId){
+    editBanner.hidden=false;
+    editBanner.innerHTML=`この記録を上書きします <button type="button" id="edit-cancel">新規に戻す</button>`;
+    saveBtn.textContent='記録を更新';
+  } else {
+    editBanner.hidden=true;
+    saveBtn.textContent='記録を保存';
+  }
+}
+editBanner.addEventListener('click',e=>{ if(e.target.id==='edit-cancel') resetForm(); });
+
+function resetForm(){
+  editingId=null;
+  editor.innerHTML=''; selectedTags.clear();
+  markEmpty(); renderTags(); updateSaveState(); updateEditUI();
+}
+
+saveBtn.addEventListener('click',async ()=>{
+  const s=serialize();
+  if(s.count===0) return;
+  const ep={
+    id: editingId || undefined,
+    date: document.getElementById('in-date').value || iso(0),
+    teacherId: teacherSel.value,
+    childIds: s.childIds,
+    classIds: s.classIds,
+    grades: s.grades,
+    body: s.text,
+    tags: [...selectedTags],
+  };
+  const wasEditing=!!editingId;
+  saveBtn.disabled=true;
+  try{
+    await persistEpisode(ep);
+    resetForm();
+    refreshViews();
+    showToast(wasEditing?'更新しました':'保存しました');
+  }catch(err){
+    showToast('保存できませんでした。通信を確認してください');
+    updateSaveState();
+  }
+});
+
+// 記録の編集・削除（各ビューのタイムラインから）
+function startEdit(id){
+  const ep=EPISODES.find(x=>x.id===id); if(!ep) return;
+  editingId=id;
+  document.getElementById('in-date').value=ep.date;
+  teacherSel.value=ep.teacherId;
+  editor.innerHTML=bodyToEditorHTML(ep.body);
+  selectedTags.clear(); (ep.tags||[]).forEach(t=>selectedTags.add(t));
+  renderTags(); markEmpty(); updateSaveState(); updateEditUI();
+  activateTab('write');
+}
+document.querySelector('main').addEventListener('click',async e=>{
+  const btn=e.target.closest('.entry-act'); if(!btn) return;
+  const id=btn.dataset.epId;
+  if(btn.dataset.act==='edit'){ startEdit(id); return; }
+  if(btn.dataset.act==='del'){
+    if(!confirm('この記録を削除します。よろしいですか？')) return;
+    btn.disabled=true;
+    try{ await removeEpisode(id); if(editingId===id) resetForm(); refreshViews(); showToast('削除しました'); }
+    catch(err){ btn.disabled=false; showToast('削除できませんでした'); }
+  }
+});
+
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1900);
+}
+
+/* =========================================================
+   書き出し（1日分をB4で印刷）
+   ========================================================= */
+const exportBtn=document.getElementById('export-btn');
+const exportModal=document.getElementById('export-modal');
+const exportDate=document.getElementById('export-date');
+const exportClass=document.getElementById('export-class');
+
+function fmtDateLong(isoStr){
+  const [y,m,d]=isoStr.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  return `${y}年${m}月${d}日（${WD[dt.getDay()]}）`;
+}
+function openExport(){
+  exportDate.value = document.getElementById('in-date').value || iso(0);
+  exportClass.innerHTML = `<option value="">全クラス</option>` +
+    CLASSES.map(cl=>`<option value="${cl.id}">${cl.name}</option>`).join('');
+  exportModal.hidden=false;
+}
+function closeExport(){ exportModal.hidden=true; }
+
+exportBtn.addEventListener('click',openExport);
+document.getElementById('export-cancel').addEventListener('click',closeExport);
+exportModal.addEventListener('click',e=>{ if(e.target===exportModal) closeExport(); });
+document.getElementById('export-print').addEventListener('click',doExportPrint);
+
+function doExportPrint(){
+  const dateStr=exportDate.value;
+  const classId=exportClass.value;
+  if(!dateStr){ showToast('日付を選んでください'); return; }
+
+  let eps=EPISODES.filter(ep=>ep.date===dateStr);
+  if(classId){
+    const ids=new Set(CHILDREN.filter(c=>c.classId===classId).map(c=>c.id));
+    eps=eps.filter(ep=> (ep.classIds||[]).includes(classId) || ep.childIds.some(id=>ids.has(id)) );
+  }
+  eps=[...eps].sort((a,b)=> (a.teacherId>b.teacherId?1:a.teacherId<b.teacherId?-1:0));
+
+  const scope = classId ? classById(classId).name : '全クラス';
+  let list;
+  if(!eps.length){
+    list=`<div class="pr-empty">この日の記録はありません。</div>`;
+  } else {
+    list = eps.map(ep=>{
+      const groups = (ep.classIds||[]).map(id=>`<span class="pr-k">${classById(id).name} 全体</span>`)
+        .concat((ep.grades||[]).map(g=>`<span class="pr-k">${g} 全体</span>`)).join('');
+      const kids = ep.childIds.map(id=>{
+        const c=childById(id); if(!c) return '';
+        return `<span class="pr-k">${c.name}（${c.grade}・${classById(c.classId).name.replace('組','')}）</span>`;
+      }).join('');
+      const targets = groups + kids;
+      const tags = ep.tags.map(t=>`#${t}`).join('　');
+      return `<div class="pr-entry">
+        <div class="pr-teacher">${teacherName(ep.teacherId)}</div>
+        <div class="pr-body">${renderBody(ep.body)}</div>
+        ${targets?`<div class="pr-kids">対象：${targets}</div>`:''}
+        ${tags?`<div class="pr-tags">${tags}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  const printedAt = fmtDateLong(iso(0));
+  document.getElementById('print-area').innerHTML = `
+    <div class="pr-sheet">
+      <div class="pr-head">
+        <div>
+          <div class="pr-brand">保育日録</div>
+          <div class="pr-date">${fmtDateLong(dateStr)}</div>
+          <div class="pr-scope">${scope}　記録件数 ${eps.length}件</div>
+        </div>
+        <table class="pr-approve">
+          <tr><td>記入</td><td>主任</td><td>園長</td></tr>
+          <tr><td></td><td></td><td></td></tr>
+        </table>
+      </div>
+      <div class="pr-list">${list}</div>
+      <div class="pr-foot">出力：${printedAt}／保育日録</div>
+    </div>`;
+
+  closeExport();
+  setTimeout(()=>window.print(), 60);
+}
+
+/* =========================================================
+   子どもで見る
+   ========================================================= */
+const childSelect=document.getElementById('child-select');
+function populateChildSelect(){
+  childSelect.innerHTML = `<option value="">選んでください</option>` +
+    CLASSES.map(cl=>`<optgroup label="${cl.name}">`+
+      CHILDREN.filter(c=>c.classId===cl.id).map(c=>`<option value="${c.id}">${c.name}（${c.grade}）</option>`).join('')
+    +`</optgroup>`).join('');
+}
+childSelect.addEventListener('change',renderChildView);
+function renderChildView(){
+  const box=document.getElementById('child-result');
+  const id=childSelect.value;
+  if(!id){ box.innerHTML=`<div class="empty"><strong>子どもを選ぶと記録が並びます</strong>その子が紐づいたエピソードが、新しい順につながって見えます。</div>`; return; }
+  const c=childById(id);
+  const eps=EPISODES.filter(ep=>
+    ep.childIds.includes(id) ||
+    (ep.classIds||[]).includes(c.classId) ||
+    (ep.grades||[]).includes(c.grade)
+  );
+  box.innerHTML =
+    `<div class="tl-head">
+      <span class="tl-title">${c.name}</span>
+      <span class="chip-grade g-${c.grade}">${c.grade}</span>
+      <span class="tl-count">${classById(c.classId).name}・記録 ${eps.length}件</span>
+    </div>` + timelineHTML(eps);
+}
+
+/* =========================================================
+   クラスで見る
+   ========================================================= */
+const classSeg=document.getElementById('class-seg');
+function populateClassSeg(){
+  classSeg.innerHTML = CLASSES.map((cl,i)=>`<button data-id="${cl.id}" aria-pressed="${i===0}">${cl.name}</button>`).join('');
+}
+classSeg.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...classSeg.children].forEach(x=>x.setAttribute('aria-pressed', x===b));
+  renderClassView(b.dataset.id);
+});
+function renderClassView(classId){
+  const box=document.getElementById('class-result');
+  const ids=new Set(CHILDREN.filter(c=>c.classId===classId).map(c=>c.id));
+  const eps=EPISODES.filter(ep=>
+    (ep.classIds||[]).includes(classId) ||
+    ep.childIds.some(id=>ids.has(id))
+  );
+  box.innerHTML =
+    `<div class="tl-head"><span class="tl-title">${classById(classId).name}</span>
+     <span class="tl-count">この組の子が登場した記録 ${eps.length}件</span></div>`
+    + timelineHTML(eps);
+}
+
+/* =========================================================
+   学年で見る
+   ========================================================= */
+const gradeSeg=document.getElementById('grade-seg');
+function populateGradeSeg(){
+  gradeSeg.innerHTML = GRADES.map((g,i)=>`<button data-grade="${g}" aria-pressed="${i===0}">${g}</button>`).join('');
+}
+gradeSeg.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...gradeSeg.children].forEach(x=>x.setAttribute('aria-pressed', x===b));
+  renderGradeView(b.dataset.grade);
+});
+function renderGradeView(grade){
+  const box=document.getElementById('grade-result');
+  const ids=new Set(CHILDREN.filter(c=>c.grade===grade).map(c=>c.id));
+  const eps=EPISODES.filter(ep=>
+    (ep.grades||[]).includes(grade) ||
+    ep.childIds.some(id=>ids.has(id))
+  );
+  box.innerHTML =
+    `<div class="tl-head"><span class="tl-title">${grade}</span>
+     <span class="tl-count">クラスをまたいだ記録 ${eps.length}件</span></div>`
+    + timelineHTML(eps);
+}
+
+/* =========================================================
+   再描画
+   ========================================================= */
+function refreshViews(){
+  renderChildView();
+  const cb=[...classSeg.children].find(b=>b.getAttribute('aria-pressed')==='true');
+  if(cb) renderClassView(cb.dataset.id);
+  const gb=[...gradeSeg.children].find(b=>b.getAttribute('aria-pressed')==='true');
+  if(gb) renderGradeView(gb.dataset.grade);
+}
+
+/* =========================================================
+   初期化
+   ========================================================= */
+function setFooter(){
+  const f=document.getElementById('foot-note');
+  if(!f) return;
+  f.textContent = LIVE
+    ? '記録は園のアカウント（Googleスプレッドシート）に保存されます。編集・削除もそのまま反映されます。'
+    : 'これは試作品（デモ）です。名簿・記録はサンプルで、画面を再読み込みすると初期状態に戻ります。園アカウントに接続すると本番として保存されます。';
+}
+function showLoading(){
+  ['child-result','class-result','grade-result'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML=`<div class="status">読み込み中…</div>`;
+  });
+}
+function showLoadError(){
+  ['child-result','class-result','grade-result'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML=`<div class="status err">データを読み込めませんでした。通信環境と接続先（GASのURL）を確認してください。</div>`;
+  });
+  saveBtn.disabled=true;
+}
+
+async function init(){
+  setFooter();
+  markEmpty(); updateSaveState(); updateEditUI();
+  if(LIVE) showLoading();
+  try{
+    await loadData();
+  }catch(err){
+    showLoadError();
+    return;
+  }
+  populateTeachers();
+  populateChildSelect();
+  populateClassSeg();
+  populateGradeSeg();
+  renderTags();
+  refreshViews();
+}
+init();
+</script>
+</body>
+</html>
