@@ -627,6 +627,11 @@ async function loadData(){
   } else {
     buildDemoData();
   }
+  // クラス内は 年少 → 年中 → 年長 の順にそろえる（デモ・本番どちらも）
+  CHILDREN.sort((a,b)=>
+    a.classId!==b.classId ? (a.classId<b.classId?-1:1)
+    : (GRADE_ORDER[a.grade]??9)-(GRADE_ORDER[b.grade]??9)
+  );
 }
 
 /* ---- 追加・更新・削除 ---- */
